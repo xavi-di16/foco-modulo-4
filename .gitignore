@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+.vercel/
+.firebase/
+firebase-debug*.log
+firestore-debug*.log
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+*-firebase-adminsdk-*.json
+.DS_Store

@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isUser(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function validTask(task) {
+      let fields = ['userId', 'title', 'description', 'priority', 'dueDate', 'completed', 'createdAt', 'updatedAt'];
+      return task.keys().hasAll(fields) && task.keys().hasOnly(fields)
+        && task.userId is string
+        && task.title is string && task.title.size() <= 100 && task.title.matches('(?s).*\\S.*')
+        && task.description is string && task.description.size() <= 1000 && task.description.matches('(?s).*\\S.*')
+        && task.priority in ['low', 'medium', 'high']
+        && (task.dueDate == null || (task.dueDate is string
+          && task.dueDate.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')))
+        && task.completed is bool
+        && task.createdAt is timestamp && task.updatedAt == request.time;
+    }
+
+    match /tasks/{taskId} {
+      allow read, delete: if isUser(resource.data.userId);
+      allow create: if isUser(request.resource.data.userId)
+        && validTask(request.resource.data)
+        && request.resource.data.createdAt == request.time && !request.resource.data.completed;
+      allow update: if isUser(resource.data.userId)
+        && validTask(request.resource.data)
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    match /taskOrders/{userId} {
+      allow read: if isUser(userId);
+      allow create, update: if isUser(userId)
+        && request.resource.data.keys().hasOnly(['ids'])
+        && request.resource.data.ids is list;
+    }
+  }
+}
