@@ -27,7 +27,7 @@
         "src",
         "api",
         "server",
-        "tests",
+        "test",
         "vite.config.ts"
     ]
 }

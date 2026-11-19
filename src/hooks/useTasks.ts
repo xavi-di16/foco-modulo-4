@@ -1,8 +1,3 @@
-import { AuthScreen } from '../components/AuthScreen';
-
-export function LoginPage() {
-    return <AuthScreen mode="login" />;
-}
 import { useEffect, useState } from 'react';
 import { taskErrorMessage, watchTasks } from '../services/tasks';
 import type { TaskSnapshot } from '../services/tasks';

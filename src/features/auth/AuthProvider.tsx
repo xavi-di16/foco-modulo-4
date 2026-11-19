@@ -22,3 +22,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return <AuthContext.Provider value={session}>{children}</AuthContext.Provider>;
 }
+
