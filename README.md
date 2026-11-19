@@ -1,89 +1,115 @@
-Foco · Gestor de tareas
-Proyecto Integrador del Módulo 4 de Full Stack. Foco es una SPA de MateCode para gestionar tareas personales. Cada cuenta puede crear, editar, completar, reabrir y eliminar sus tareas. La lista se sincroniza en tiempo real y el resumen por correo incluye todas las tareas de la cuenta, aunque haya un filtro activo.
+# Foco · Gestor de tareas
 
-La lista permite filtrar por estado, ordenar por prioridad o vencimiento y guardar un orden manual. Para reordenar, seleccioná Todas y Orden manual. Usá el asa de cada fila con el mouse, con el dedo o con las teclas Espacio y flechas.
-URL de producción
-Pendiente de completar con la URL pública que entregue Vercel al importar el repositorio.
-Instalación
-Requiere Node.js 24 y npm.
+Proyecto Integrador del Módulo 4 de Full Stack. Foco permite organizar tareas personales en una interfaz adaptable a escritorio y móvil. Cada cuenta puede crear, editar, completar y eliminar sus tareas, asignarles prioridad y vencimiento, y recibir un resumen por correo.
+
+[Abrir Foco en Vercel](https://foco-modulo-4.vercel.app/)
+
+## Cómo probar la demo
+
+1. Registrate con correo y contraseña. Creá una tarea, editala, marcala como completada y recargá la página para comprobar que se guardó.
+2. Usá los filtros por estado o elegí ordenar por prioridad o vencimiento. En **Todas → Orden manual**, podés reordenar las tareas arrastrándolas desde el asa o usando el teclado.
+3. Tocá **Enviar resumen**. Si Foco te pide verificar tu cuenta, elegí **Enviar enlace de verificación**, abrí el correo de Firebase y volvé a presionar **Enviar resumen**.
+
+Si Amazon SES está en sandbox, el remitente y el destinatario deben estar verificados en la misma región de AWS. [Sandbox de Amazon SES](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html)
+
+## Tecnologías
+
+| Área | Herramientas |
+| --- | --- |
+| Interfaz y navegación | React 19, TypeScript, Vite y React Router |
+| Autenticación y datos | Firebase Authentication y Cloud Firestore |
+| Reordenamiento | dnd-kit |
+| Función de correo | Vercel Functions, Firebase Admin y AWS SDK v3 con `@aws-sdk/client-ses` |
+| Pruebas | Vitest, React Testing Library y Firebase Emulator Suite para comprobaciones locales |
+| Despliegue | Vercel con Node.js 24 |
+
+## Arquitectura
+
+| Código | Responsabilidad |
+| --- | --- |
+| [Páginas, componentes y rutas](src/) | `/login` y `/registro` son públicas. `/tareas` espera la comprobación de la sesión antes de mostrar datos. |
+| [Autenticación](src/features/auth/) | El proveedor de contexto escucha la sesión con `onAuthStateChanged`. |
+| [Hooks](src/hooks/) y [servicios](src/services/) | `useTasks` escucha los cambios de Firestore con `onSnapshot`. Al salir de la vista se cancelan las suscripciones. |
+| [Tipos](src/types/) y [utilidades](src/utils/) | Modelo de tarea, validaciones, fechas, filtros y ordenamiento. |
+| [API de resumen](api/send-summary.ts) y [servicios de servidor](server/) | Validación del token, consulta de las tareas de la cuenta y envío mediante SES. |
+| [Pruebas](test/) | Validación de formularios, componentes, rutas protegidas y respuestas de la función. |
+
+Cada tarea se guarda en `tasks/{id}` con el campo `userId`. El orden manual tiene su propio documento en `taskOrders/{uid}`, lo que permite guardar un reordenamiento en una sola escritura. Las reglas limitan lecturas y escrituras al propietario. [Reglas de Firestore del proyecto](firestore.rules)
+
+## Instalación local
+
+Necesitás Node.js **24.x**, npm y un proyecto de Firebase con una aplicación web registrada.
+
+```bash
+git clone https://github.com/xavi-di16/foco-modulo-4.git
+cd foco-modulo-4
 npm ci
-cp .env.example .env
-npm run dev
-En Windows, podés crear el archivo con Copy-Item .env.example .env. Completá las variables web antes de iniciar Vite y abrí la dirección que imprime la terminal.
-Comando	Función
-npm run dev	Ejecuta el frontend con Vite.
-npm test	Ejecuta Vitest y React Testing Library una vez.
-npm run test:watch	Repite las pruebas al guardar cambios.
-npm run build	Comprueba los tipos y genera dist/.
-npm run preview	Sirve la compilación de producción en local.
-npx vercel dev	Ejecuta el frontend y la función de correo con Vercel CLI.
+cp .env.example .env.local
+```
 
+En PowerShell, copiá la plantilla con `Copy-Item .env.example .env.local`. Si ya tenés el archivo, completalo con los valores de tu entorno.
 
-npm run dev sirve la SPA. Usá npx vercel dev para probar la ruta /api/send-summary con un proyecto de Vercel vinculado y las variables de servidor cargadas.
-Firebase
-1. Creá un proyecto de Firebase y registrá una aplicación Web. Copiá apiKey, authDomain, projectId y appId de su configuración a las variables VITE_FIREBASE_* correspondientes.
-2. En Authentication → Sign-in method, habilitá Correo electrónico/contraseña.
-3. En Firestore Database, creá la base (default) en modo producción. En la pestaña Reglas, pegá y publicá el contenido de firestore.rules. Como alternativa, usá npx firebase-tools deploy --only firestore:rules --project TU_PROJECT_ID.
-4. Para la función de correo, generá una clave JSON en Configuración del proyecto → Cuentas de servicio. Usá project_id, client_email y private_key en las tres variables de servidor. Usá el mismo proyecto para el cliente y Firebase Admin.
-5. Agregá el dominio público de Vercel en Authentication → Settings → Authorized domains. Si probás con Firebase real en local, agregá también localhost si tu proyecto lo requiere.
-La colección tasks se crea con la primera tarea. El orden manual se guarda en taskOrders/{uid}. Las consultas de la aplicación filtran por userId y las reglas de Firestore comprueban la propiedad en cada lectura y escritura. Los timestamps los asigna Firestore. Documentación de reglas de Firestore
-AWS SES
-1. Elegí una región de SES y verificá una identidad de envío, que puede ser un correo o un dominio. Usá una dirección de esa identidad en SES_FROM_EMAIL.
-2. Configurá credenciales IAM con permiso ses:SendEmail para esa identidad. Cargalas junto con la región en las variables SES_AWS_*.
-3. Si tu cuenta de SES está en sandbox, verificá también el correo receptor en esa región. El receptor debe completar además la verificación de correo de Firebase Authentication desde Foco. Para enviar a usuarios con correos que SES no haya verificado, solicitá el acceso a producción de SES. Sandbox de Amazon SES
-Variables de entorno
-.env.example enumera las variables con valores vacíos. .env y sus variantes locales quedan excluidos de Git. Las variables VITE_ se incorporan al frontend cuando compila Vite.
-Variable	Ámbito	Valor
-VITE_FIREBASE_API_KEY	Web	apiKey de la aplicación web de Firebase.
-VITE_FIREBASE_AUTH_DOMAIN	Web	authDomain de Firebase.
-VITE_FIREBASE_PROJECT_ID	Web	ID del proyecto Firebase.
-VITE_FIREBASE_APP_ID	Web	appId de la aplicación web.
-VITE_USE_FIREBASE_EMULATORS	Local	Valor opcional true para usar los emuladores de Auth y Firestore con Vite.
-FIREBASE_PROJECT_ID	Servidor	project_id de la cuenta de servicio.
-FIREBASE_CLIENT_EMAIL	Servidor	client_email de la cuenta de servicio.
-FIREBASE_PRIVATE_KEY	Servidor	private_key de la cuenta de servicio, con saltos reales o literales \n.
-SES_AWS_REGION	Servidor	Región de la identidad SES, por ejemplo us-east-1.
-SES_AWS_ACCESS_KEY_ID	Servidor	ID de la clave IAM.
-SES_AWS_SECRET_ACCESS_KEY	Servidor	Secreto de la clave IAM.
-SES_FROM_EMAIL	Servidor	Dirección remitente verificada en SES.
+1. En Firebase Authentication, habilitá el proveedor **Correo electrónico/contraseña**.
+2. Creá la base de Firestore `(default)` en modo producción y publicá el contenido de [firestore.rules](firestore.rules).
+3. Cargá las cuatro variables web de Firebase en `.env.local` y ejecutá `npm run dev`.
 
+Para probar la función de correo en local, cargá también las variables de servidor y ejecutá `npx vercel dev` con el proyecto vinculado a Vercel. La demo publicada permite probar el flujo de correo desde el navegador.
 
-El prefijo SES_AWS_ evita los nombres de variables reservados por Vercel, como AWS_REGION. Si pegás la clave privada en .env con saltos \n, encerrá el valor entre comillas dobles. Mantené el JSON de la cuenta de servicio fuera del repositorio. Variables reservadas de Vercel
-Arquitectura
-Carpeta	Responsabilidad
-src/pages	Pantallas de inicio de sesión, registro y tareas.
-src/components	Formularios, lista, filtros, resumen, diálogos y avisos.
-src/routes, src/features/auth	Rutas públicas y privadas, contexto y estado de la sesión.
-src/hooks, src/services	Acceso al contexto, suscripciones, operaciones de Firestore y llamadas de red.
-src/types, src/utils	Modelo Task, validación, fechas y ordenamiento.
-api, server	Vercel Function y servicios de servidor para Firebase Admin y SES.
-tests	Pruebas unitarias y de componentes con servicios simulados.
+### Variables de entorno
 
+La plantilla del proyecto contiene los nombres con valores vacíos. [Plantilla de variables](.env.example)
 
-onAuthStateChanged decide cuándo mostrar la ruta privada. useTasks escucha las tareas y el orden en Firestore con onSnapshot y cancela las dos suscripciones al desmontarse. Una tarea nueva aparece arriba en el orden manual hasta que el usuario la reubica. El orden se guarda en una sola escritura y sus IDs se cruzan con las tareas de la sesión.
+| Variable | Uso |
+| --- | --- |
+| `VITE_FIREBASE_API_KEY` | `apiKey` de la aplicación web de Firebase |
+| `VITE_FIREBASE_AUTH_DOMAIN` | `authDomain` de la aplicación web |
+| `VITE_FIREBASE_PROJECT_ID` | `projectId` del proyecto Firebase |
+| `VITE_FIREBASE_APP_ID` | `appId` de la aplicación web |
+| `VITE_USE_FIREBASE_EMULATORS` | Opción local. Usá `true` para conectar Auth y Firestore a los emuladores. |
+| `FIREBASE_PROJECT_ID` | `project_id` del JSON de la cuenta de servicio |
+| `FIREBASE_CLIENT_EMAIL` | `client_email` de la cuenta de servicio |
+| `FIREBASE_PRIVATE_KEY` | `private_key` completa. Admite saltos reales y secuencias literales `\n`. |
+| `SES_AWS_REGION` | Región de la identidad de envío de SES |
+| `SES_AWS_ACCESS_KEY_ID` | ID de la clave IAM con permiso `ses:SendEmail` |
+| `SES_AWS_SECRET_ACCESS_KEY` | Secreto de la clave IAM |
+| `SES_FROM_EMAIL` | Correo remitente verificado en SES |
 
-La lección 10 ubica las funciones de Vercel en api/. Los módulos de servidor quedan fuera de src/ para que el bundle del navegador solo importe el cliente de Firebase.
-Envío de correo
-1. Enviar resumen solicita un token de Firebase actualizado e invoca POST /api/send-summary usando el header Authorization: Bearer <token>.
-2. La función valida el método, el cuerpo vacío y la vigencia del token con Firebase Admin. Si el correo aún no está verificado, el botón ofrece enviar un enlace con Firebase Authentication.
-3. La función aplica una espera de 30 segundos por cuenta para evitar envíos repetidos. Consulta Firestore por el uid autenticado y forma un resumen en texto con los totales y el estado de cada tarea.
-4. AWS SES recibe el mensaje para el correo verificado de la sesión. La pantalla indica el envío, la verificación requerida o el error.
-Prueba local con emuladores
-Para verificar autenticación, CRUD y reglas con datos de prueba, usá Firebase Emulator Suite y Java. Con npm ci ya ejecutado, abrí dos terminales.
-# Terminal 1
+Vite incorpora las variables `VITE_` a la configuración del navegador. Guardá la clave de Firebase Admin y las credenciales de AWS en las variables de servidor de Vercel o en el entorno local. `.gitignore` excluye los archivos de entorno con valores.
+
+## Envío de correo
+
+1. **Enviar resumen** actualiza el token de Firebase y llama a `POST /api/send-summary` con el encabezado `Authorization: Bearer <token>`. La solicitud lleva el cuerpo vacío.
+2. Firebase Admin comprueba el token y su revocación. La función toma el destinatario de la cuenta con correo verificado. Si falta la verificación, Firebase Authentication envía el enlace a pedido del usuario.
+3. La función aplica un intervalo de 30 segundos entre solicitudes por cuenta, consulta las tareas por el UID autenticado y arma un resumen con los totales y el estado de cada tarea.
+4. Amazon SES envía el resumen en texto al correo de la cuenta. La interfaz muestra si se completó el envío o si hubo un error.
+
+## Pruebas
+
+| Comando | Resultado comprobado |
+| --- | --- |
+| `npm run typecheck` | TypeScript validado |
+| `npm test` | 27 pruebas aprobadas en 9 archivos |
+| `npm run build` | Compilación de producción generada en `dist/` |
+
+La suite cubre validaciones, filtros, rutas privadas y respuestas de la API. Las pruebas del endpoint simulan Firebase Admin y SES. Con los emuladores se comprobó el CRUD, la actualización entre pestañas y el aislamiento de las tareas de dos cuentas. En Vercel, se comprobó que la demo abre y que `GET /api/send-summary` responde `405` con el mensaje que indica usar `POST`.
+
+Para repetir las comprobaciones con emuladores, necesitás Java 21. Iniciá Firebase Emulator Suite y, en otra terminal, ejecutá `npm run dev` con `VITE_USE_FIREBASE_EMULATORS=true` en `.env.local`.
+
+```bash
 npx firebase-tools emulators:start --project demo-foco --only auth,firestore
-Agregá VITE_USE_FIREBASE_EMULATORS=true a tu .env y ejecutá npm run dev en la segunda terminal. El emulador usa el proyecto local demo-foco y las reglas incluidas en el repositorio. Para cambiar a Firebase real, quitá esa opción y reiniciá Vite.
+```
 
-La suite verifica formularios vacíos, navegación protegida, filtros, orden, formato del correo y respuestas del endpoint. La comprobación en navegador con emuladores cubrió sesión persistente, sincronización entre pestañas y CRUD. Se verificó con dos cuentas que Firestore deniega lecturas y escrituras ajenas. La función también se ejecutó localmente en el runtime Node de Vercel con un token de Firebase emulado. La recepción real del correo se comprueba con las credenciales y las identidades de AWS SES del despliegue.
-GitHub y Vercel
-1. Creá un repositorio público y vacío en GitHub. El ZIP incluye el historial local. Desde la carpeta extraída, ejecutá git log --oneline para verlo y luego agregá el remoto indicado por GitHub.git remote add origin https://github.com/TU_USUARIO/TU_REPOSITORIO.git
-   git push -u origin main
-2. Importá el repositorio en Vercel como proyecto Vite. vercel.json configura el build, dist y las rutas directas de la SPA. Seleccioná Node.js 24 en el proyecto.
-3. Cargá en Vercel las cuatro variables web y las siete de servidor de la tabla y desplegá. Si cambiás las variables web, generá un nuevo despliegue para que el frontend reciba los valores actualizados.
-4. Desde la URL pública, registrate, creá una tarea, editala, marcala como completada y pedí el resumen. Verificá el correo si Foco te lo solicita. Validá la recepción por SES y actualizá la sección URL de producción del README. Entregá el enlace público del repositorio.
-Uso de IA
-El pedido inicial a Codex fue «completa el trabajo final dame el codigo final […] basandote en el material del curso. sigue al pie de la letra la guia». También se pidió consultar el repositorio de un compañero y dejar GitHub, Vercel y Firestore a cargo del usuario. La guía, la rúbrica y la presentación oficial se contrastaron para identificar los requisitos. El repositorio de la cursada sirvió como referencia de estructura para la SPA y la función de Vercel. Repositorio de referencia
+## Despliegue
 
-La IA fue más efectiva para revisar responsabilidades entre capas y proponer casos de prueba concretos. Un patrón aplicado fue convertir cada requisito en un comportamiento verificable, como abrir una ruta privada sin sesión, rechazar una tarea vacía o mostrar un error de SES. Se mantuvo el ID de usuario en la consulta y en las reglas porque cada capa cumple una función distinta. Para el correo, se eligió buscar las tareas y el destinatario en el servidor a partir del token, lo que permite que el botón resuma también las tareas ocultas por el filtro.
+1. Importá el repositorio en Vercel como un proyecto **Vite**. [vercel.json](vercel.json) define el comando de compilación, la carpeta `dist` y las rutas de la SPA.
+2. En Firebase, generá el JSON de Admin desde **Configuración del proyecto → Cuentas de servicio → Generar nueva clave privada**. Usá el mismo proyecto que para la aplicación web. [Configurar Firebase Admin](https://firebase.google.com/docs/admin/setup)
+3. Agregá el dominio de Vercel a los dominios autorizados de Firebase Authentication. Verificá la identidad de SES en la región que configuraste y asigná a la credencial IAM el permiso de envío para esa identidad.
+4. Cargá las cuatro variables web y las siete de servidor en **Settings → Environment Variables → Production**. Desplegá y probá el registro, las tareas y el resumen desde la URL pública. Después de modificar variables de producción, ejecutá un nuevo despliegue. [Variables de entorno de Vercel](https://vercel.com/docs/environment-variables)
 
-Foto de escritorio de Unsplash. Imagen original
+## Uso de IA
+
+Usé Codex para contrastar la consigna con las lecciones del módulo, generar una primera implementación, escribir pruebas y revisar errores durante la puesta en marcha. El pedido inicial incluía «hace todo el trabajo basandote en el material del curso. sigue al pie de la letra la guia». Para diagnosticar Vercel, compartí las salidas de la terminal con errores como `EPERM` y `tar unpack failed`.
+
+El patrón que más sirvió fue dar un error concreto y comprobar el siguiente paso. Las pruebas con dos cuentas permitieron verificar las reglas de Firestore. La comprobación de la ruta publicada permitió confirmar que la función estaba disponible. Una decisión técnica fue obtener el destinatario del token verificado y consultar las tareas en el servidor para que cada cuenta solo pueda solicitar su propio resumen.
+
+Fotografía de escritorio de Unsplash. [Imagen original](https://images.unsplash.com/photo-1499750310107-5fef28a66643)
