@@ -4,6 +4,7 @@ import { login, loginWithGoogle, register } from '../services/auth';
 import type { AuthMode } from '../utils/authValidation';
 import { AuthForm } from './AuthForm';
 import { Brand } from './Brand';
+import { ContactFooter } from './ContactFooter';
 import { Notice } from './Notice';
 
 export function AuthScreen({ mode }: { mode: AuthMode }) {
@@ -33,6 +34,7 @@ export function AuthScreen({ mode }: { mode: AuthMode }) {
                         </Link>
                     </p>
                 </div>
+                <ContactFooter />
                 <p className="auth-footer">Gestor de tareas de MateCode</p>
             </main>
             <div className="auth-visual" aria-hidden="true"><img src="/escritorio.jpg" alt="" /></div>

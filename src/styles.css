@@ -929,6 +929,83 @@ svg {
     margin-bottom: 12px;
 }
 
+.contact-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    padding-top: 20px;
+    margin-top: 8px;
+    border-top: 1px solid var(--line);
+}
+
+.contact-footer-title {
+    font-size: .88rem;
+    font-weight: 750;
+    letter-spacing: -.01em;
+    color: var(--ink);
+}
+
+.contact-footer-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.contact-footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: .82rem;
+    font-weight: 600;
+    line-height: 1.25;
+    text-decoration: none;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+.contact-footer-link svg {
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: color .15s ease;
+}
+
+.contact-footer-link:hover {
+    background: #f2f5ec;
+    border-color: #d1dac2;
+    color: var(--olive);
+}
+
+.contact-footer-link:hover svg {
+    color: var(--olive);
+}
+
+.contact-footer-link:focus-visible {
+    outline: 2px solid #637438;
+    outline-offset: 2px;
+}
+
+.auth-main .contact-footer {
+    width: min(100%, 380px);
+    margin-inline: auto;
+    margin-bottom: 8px;
+}
+
+.auth-main .auth-footer {
+    width: min(100%, 380px);
+    margin-inline: auto;
+}
+
 @media (min-width: 460px) {
     .account-email {
         display: block;

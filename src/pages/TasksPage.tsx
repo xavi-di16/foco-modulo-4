@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { ArrowDownUp, LogOut, Plus } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { Brand } from '../components/Brand';
+import { ContactFooter } from '../components/ContactFooter';
 import { Dialog } from '../components/Dialog';
 import { EmailSummary } from '../components/EmailSummary';
 import { Notice } from '../components/Notice';
@@ -170,6 +171,8 @@ function Workspace({ user }: { user: User }) {
                             </section>
                         </>
                     )}
+
+                    <ContactFooter />
                 </div>
             </main>
 
