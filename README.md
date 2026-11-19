@@ -84,6 +84,17 @@ Vite incorpora las variables `VITE_` a la configuración del navegador. Guardá 
 4. Amazon SES envía el resumen con HTML y versión de texto. El correo muestra el progreso, las tareas por estado, las prioridades y los vencimientos con la paleta de Foco. El botón abre la lista de tareas cuando Vercel proporciona `VERCEL_PROJECT_PRODUCTION_URL`.
 5. Si SES rechaza al destinatario por falta de verificación, la función consulta su identidad y solicita un enlace cuando hace falta. Si hay una confirmación pendiente, la aplicación indica que abras el enlace de AWS.
 
+### Cómo activar y recibir tu resumen
+
+1. Entrá a Foco con **Continuar con Google** o iniciá sesión con el correo y la contraseña de tu cuenta. El resumen se envía al correo de esa sesión.
+2. En **Mis tareas**, tocá **Enviar resumen**. Si te aparece **Enviar enlace de verificación**, presionalo y abrí el correo de Firebase. Ese **primer enlace** confirma tu dirección para tu cuenta de Foco. Después, volvé a la pestaña de Foco para continuar.
+3. Si tu dirección todavía necesita verificarse en Amazon SES, Foco solicita automáticamente el registro de tu correo como identidad en AWS. Buscá el mensaje de **Amazon Web Services** y abrí su enlace. Ese **segundo enlace** autoriza a SES a enviarte el resumen mientras el servicio está en sandbox.
+4. Una vez confirmada la dirección en AWS, volvé a Foco y tocá **Enviar resumen** otra vez. Si la app te pide esperar unos segundos, volvé a intentar cuando termine el tiempo indicado.
+
+En el primer uso pueden aparecer **dos enlaces distintos**, uno de Firebase y otro de AWS. Si Firebase ya reconoce tu correo como verificado al entrar con Google, empezás directamente por la confirmación de AWS cuando haga falta.
+
+> **Dónde encontrar el resumen.** En las pruebas de Foco, los resúmenes llegaron a **Spam**. Revisá esa carpeta y buscá el asunto **Resumen de tus tareas · Foco**.
+
 ## Pruebas
 
 | Comando | Resultado comprobado |
