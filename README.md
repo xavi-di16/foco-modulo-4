@@ -6,11 +6,11 @@ Proyecto Integrador del Módulo 4 de Full Stack. Foco permite organizar tareas p
 
 ## Cómo probar la demo
 
-1. Registrate con correo y contraseña. Creá una tarea, editala, marcala como completada y recargá la página para comprobar que se guardó.
+1. Entrá con Google o registrate con correo y contraseña. Creá una tarea, editala, marcala como completada y recargá la página para comprobar que se guardó.
 2. Usá los filtros por estado o elegí ordenar por prioridad o vencimiento. En **Todas → Orden manual**, podés reordenar las tareas arrastrándolas desde el asa o usando el teclado.
-3. Tocá **Enviar resumen**. Si Foco te pide verificar tu cuenta, elegí **Enviar enlace de verificación**, abrí el correo de Firebase y volvé a presionar **Enviar resumen**.
+3. Tocá **Enviar resumen**. Si Foco te pide verificar tu cuenta, elegí **Enviar enlace de verificación**, abrí el correo de Firebase y volvé a Foco para continuar. Si SES te manda su propio enlace, confirmalo y volvé a tocar **Enviar resumen**.
 
-Si Amazon SES está en sandbox, el remitente y el destinatario deben estar verificados en la misma región de AWS. [Sandbox de Amazon SES](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html)
+En sandbox, Amazon SES requiere que el destinatario confirme su identidad en la región del envío. Foco solicita el enlace desde el botón de resumen con el correo autenticado. El enlace de AWS vence a las 24 horas. En una cuenta con acceso a producción, SES admite destinatarios sin identidad verificada. [Sandbox de Amazon SES](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html)
 
 ## Tecnologías
 
@@ -49,7 +49,7 @@ cp .env.example .env.local
 
 En PowerShell, copiá la plantilla con `Copy-Item .env.example .env.local`. Si ya tenés el archivo, completalo con los valores de tu entorno.
 
-1. En Firebase Authentication, habilitá el proveedor **Correo electrónico/contraseña**.
+1. En Firebase Authentication, habilitá **Correo electrónico/contraseña** y **Google**. Agregá el dominio desde el que vas a acceder a **Dominios autorizados**. [Acceso con Google en Firebase](https://firebase.google.com/docs/auth/web/google-signin)
 2. Creá la base de Firestore `(default)` en modo producción y publicá el contenido de [firestore.rules](firestore.rules).
 3. Cargá las cuatro variables web de Firebase en `.env.local` y ejecutá `npm run dev`.
 
@@ -81,17 +81,18 @@ Vite incorpora las variables `VITE_` a la configuración del navegador. Guardá 
 1. **Enviar resumen** actualiza el token de Firebase y llama a `POST /api/send-summary` con el encabezado `Authorization: Bearer <token>`. La solicitud lleva el cuerpo vacío.
 2. Firebase Admin comprueba el token y su revocación. La función toma el destinatario de la cuenta con correo verificado. Si falta la verificación, Firebase Authentication envía el enlace a pedido del usuario.
 3. La función aplica un intervalo de 30 segundos entre solicitudes por cuenta, consulta las tareas por el UID autenticado y arma un resumen con los totales y el estado de cada tarea.
-4. Amazon SES envía el resumen en texto al correo de la cuenta. La interfaz muestra si se completó el envío o si hubo un error.
+4. Amazon SES envía el resumen con HTML y versión de texto. El correo muestra el progreso, las tareas por estado, las prioridades y los vencimientos con la paleta de Foco. El botón abre la lista de tareas cuando Vercel proporciona `VERCEL_PROJECT_PRODUCTION_URL`.
+5. Si SES rechaza al destinatario por falta de verificación, la función consulta su identidad y solicita un enlace cuando hace falta. Si hay una confirmación pendiente, la aplicación indica que abras el enlace de AWS.
 
 ## Pruebas
 
 | Comando | Resultado comprobado |
 | --- | --- |
 | `npm run typecheck` | TypeScript validado |
-| `npm test` | 27 pruebas aprobadas en 9 archivos |
+| `npm test` | 40 pruebas aprobadas en 10 archivos |
 | `npm run build` | Compilación de producción generada en `dist/` |
 
-La suite cubre validaciones, filtros, rutas privadas y respuestas de la API. Las pruebas del endpoint simulan Firebase Admin y SES. Con los emuladores se comprobó el CRUD, la actualización entre pestañas y el aislamiento de las tareas de dos cuentas. En Vercel, se comprobó que la demo abre y que `GET /api/send-summary` responde `405` con el mensaje que indica usar `POST`.
+La suite cubre validaciones, filtros, rutas privadas y respuestas de la API. Las pruebas del endpoint simulan Firebase Admin y SES e incluyen el flujo de verificación y el cuerpo HTML del correo. Con los emuladores se comprobó el CRUD, la actualización entre pestañas y el aislamiento de las tareas de dos cuentas. En Vercel, se comprobó que la demo abre y que `GET /api/send-summary` responde `405` con el mensaje que indica usar `POST`.
 
 Para repetir las comprobaciones con emuladores, necesitás Java 21. Iniciá Firebase Emulator Suite y, en otra terminal, ejecutá `npm run dev` con `VITE_USE_FIREBASE_EMULATORS=true` en `.env.local`.
 
@@ -103,8 +104,26 @@ npx firebase-tools emulators:start --project demo-foco --only auth,firestore
 
 1. Importá el repositorio en Vercel como un proyecto **Vite**. [vercel.json](vercel.json) define el comando de compilación, la carpeta `dist` y las rutas de la SPA.
 2. En Firebase, generá el JSON de Admin desde **Configuración del proyecto → Cuentas de servicio → Generar nueva clave privada**. Usá el mismo proyecto que para la aplicación web. [Configurar Firebase Admin](https://firebase.google.com/docs/admin/setup)
-3. Agregá el dominio de Vercel a los dominios autorizados de Firebase Authentication. Verificá la identidad de SES en la región que configuraste y asigná a la credencial IAM el permiso de envío para esa identidad.
+3. Agregá el dominio de Vercel a los dominios autorizados de Firebase Authentication. Verificá la identidad de SES en la región que configuraste y asigná a la credencial IAM el permiso `ses:SendEmail` para esa identidad.
 4. Cargá las cuatro variables web y las siete de servidor en **Settings → Environment Variables → Production**. Desplegá y probá el registro, las tareas y el resumen desde la URL pública. Después de modificar variables de producción, ejecutá un nuevo despliegue. [Variables de entorno de Vercel](https://vercel.com/docs/environment-variables)
+
+### Permisos de SES para solicitar la verificación
+
+En IAM, agregá este objeto al arreglo `Statement` de la política del usuario que usa Vercel. Usá la misma región que figura en `SES_AWS_REGION`. Estas dos acciones se autorizan con `Resource` igual a `*`. [Acciones y recursos de SES](https://docs.aws.amazon.com/service-authorization/latest/reference/list_ses.html)
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "ses:GetIdentityVerificationAttributes",
+    "ses:VerifyEmailIdentity"
+  ],
+  "Resource": "*",
+  "Condition": {
+    "StringEquals": { "aws:RequestedRegion": "us-east-2" }
+  }
+}
+```
 
 ## Uso de IA
 

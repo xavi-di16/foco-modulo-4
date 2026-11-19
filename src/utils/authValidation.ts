@@ -32,7 +32,11 @@ const authMessages: Record<string, string> = {
     'auth/user-disabled': 'Esta cuenta está deshabilitada.',
     'auth/too-many-requests': 'Hubo demasiados intentos. Probá de nuevo en unos minutos.',
     'auth/network-request-failed': 'Revisá tu conexión y volvé a intentar.',
-    'auth/operation-not-allowed': 'Habilitá Correo electrónico/contraseña en Firebase Authentication.',
+    'auth/operation-not-allowed': 'Revisá que el método de acceso esté habilitado en Firebase Authentication.',
+    'auth/popup-blocked': 'El navegador bloqueó la ventana de Google. Habilitá las ventanas emergentes y volvé a intentar.',
+    'auth/popup-closed-by-user': 'Cerraste la ventana de Google. Podés volver a intentar.',
+    'auth/unauthorized-domain': 'Agregá el dominio de Foco a los dominios autorizados de Firebase Authentication.',
+    'auth/account-exists-with-different-credential': 'Ya tenés una cuenta con ese correo. Iniciá sesión con el método que usaste para registrarte.',
     'auth/invalid-api-key': 'Revisá la configuración web de Firebase.',
 };
 

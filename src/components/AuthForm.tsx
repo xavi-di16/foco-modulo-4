@@ -8,15 +8,18 @@ import { Notice } from './Notice';
 interface AuthFormProps {
     mode: AuthMode;
     onSubmit: (email: string, password: string) => Promise<unknown>;
+    onGoogleSignIn?: () => Promise<unknown>;
     disabled?: boolean;
 }
 
-export function AuthForm({ mode, onSubmit, disabled }: AuthFormProps) {
+type AuthMethod = 'password' | 'google';
+
+export function AuthForm({ mode, onSubmit, onGoogleSignIn, disabled }: AuthFormProps) {
     const [values, setValues] = useState<Credentials>({ email: '', password: '' });
     const [fieldErrors, setFieldErrors] = useState<Partial<Credentials>>({});
     const [error, setError] = useState<string | null>(null);
     const [visible, setVisible] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
+    const [submitting, setSubmitting] = useState<AuthMethod | null>(null);
     const isRegister = mode === 'register';
 
     function change(field: keyof Credentials, value: string) {
@@ -25,7 +28,7 @@ export function AuthForm({ mode, onSubmit, disabled }: AuthFormProps) {
         setError(null);
     }
 
-    async function submit(event: FormEvent<HTMLFormElement>) {
+    function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (submitting || disabled) return;
 
@@ -33,19 +36,23 @@ export function AuthForm({ mode, onSubmit, disabled }: AuthFormProps) {
         setFieldErrors(errors);
         if (Object.keys(errors).length > 0) return;
 
+        void authenticate('password', () => onSubmit(values.email.trim(), values.password));
+    }
+
+    async function authenticate(method: AuthMethod, action: () => Promise<unknown>) {
         setError(null);
-        setSubmitting(true);
+        setSubmitting(method);
         try {
-            await onSubmit(values.email.trim(), values.password);
+            await action();
         } catch (requestError) {
             setError(authErrorMessage(requestError));
         } finally {
-            setSubmitting(false);
+            setSubmitting(null);
         }
     }
 
     return (
-        <form className="auth-form" onSubmit={submit} noValidate aria-busy={submitting}>
+        <form className="auth-form" onSubmit={submit} noValidate aria-busy={Boolean(submitting)}>
             <div className="field">
                 <label htmlFor="email">Correo electrónico</label>
                 <input
@@ -87,10 +94,24 @@ export function AuthForm({ mode, onSubmit, disabled }: AuthFormProps) {
                 {fieldErrors.password && <p className="field-error" id="password-error">{fieldErrors.password}</p>}
             </div>
             {error && <Notice>{error}</Notice>}
-            <button className="button button-primary auth-submit" type="submit" disabled={submitting || disabled}>
-                {submitting ? 'Un momento…' : isRegister ? 'Crear cuenta' : 'Iniciar sesión'}
-                {!submitting && <ArrowRight size={18} aria-hidden="true" />}
+            <button className="button button-primary auth-submit" type="submit" disabled={Boolean(submitting) || disabled}>
+                {submitting === 'password' ? 'Un momento…' : isRegister ? 'Crear cuenta' : 'Iniciar sesión'}
+                {submitting !== 'password' && <ArrowRight size={18} aria-hidden="true" />}
             </button>
+            {onGoogleSignIn && (
+                <>
+                    <div className="auth-divider" aria-hidden="true">o</div>
+                    <button
+                        type="button"
+                        className="button google-button"
+                        disabled={Boolean(submitting) || disabled}
+                        onClick={() => void authenticate('google', onGoogleSignIn)}
+                    >
+                        <img src="/google-g.png" width="18" height="18" alt="" />
+                        {submitting === 'google' ? 'Conectando con Google…' : 'Continuar con Google'}
+                    </button>
+                </>
+            )}
         </form>
     );
 }

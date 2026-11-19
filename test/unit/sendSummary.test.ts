@@ -38,7 +38,7 @@ describe('POST /api/send-summary', () => {
         });
         mocks.reserve.mockResolvedValue(0);
         mocks.createSender.mockReturnValue(mocks.send);
-        mocks.send.mockResolvedValue({ MessageId: 'mock-id' });
+        mocks.send.mockResolvedValue('sent');
     });
 
     it('rechaza métodos distintos de POST', async () => {
@@ -94,8 +94,23 @@ describe('POST /api/send-summary', () => {
 
         expect(mocks.verify).toHaveBeenCalledWith('sesion-de-prueba', true);
         expect(mocks.where).toHaveBeenCalledWith('userId', '==', 'user-a');
-        expect(mocks.send).toHaveBeenCalledWith('persona@example.com', expect.stringContaining('Completada: Informe'));
+        expect(mocks.send).toHaveBeenCalledWith('persona@example.com', expect.objectContaining({
+            text: expect.stringContaining('Completada: Informe'),
+            html: expect.stringContaining('Informe'),
+        }));
         expect(response.status).toHaveBeenCalledWith(200);
+    });
+
+    it.each([
+        ['verification-requested', true],
+        ['verification-pending', false],
+    ])('informa el estado de verificación de SES para %s', async (result, requested) => {
+        const response = mockResponse();
+        mocks.send.mockResolvedValue(result);
+        await handler(request(), response as unknown as VercelResponse);
+
+        expect(response.status).toHaveBeenCalledWith(202);
+        expect(response.json).toHaveBeenCalledWith({ code: 'SES_VERIFICATION_REQUIRED', requested });
     });
 
     it('informa el tiempo restante sin reenviar cuando hay un límite activo', async () => {

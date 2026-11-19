@@ -53,11 +53,26 @@ export default async function sendSummary(request: VercelRequest, response: Verc
         }
 
         const tasks = await db.collection('tasks').where('userId', '==', identity.uid).get();
-        const summary = formatSummary(tasks.docs.map(task => ({
-            title: String(task.get('title')),
-            completed: task.get('completed') === true,
-        })));
-        await send(identity.email, summary);
+        const summary = formatSummary(tasks.docs.map(task => {
+            const dueDate: unknown = task.get('dueDate');
+            const priority: unknown = task.get('priority');
+            return {
+                title: String(task.get('title')),
+                completed: task.get('completed') === true,
+                dueDate: typeof dueDate === 'string' ? dueDate : undefined,
+                priority: priority === 'low' || priority === 'medium' || priority === 'high' ? priority : undefined,
+            };
+        }), process.env.VERCEL_PROJECT_PRODUCTION_URL);
+        const delivery = await send(identity.email, summary);
+        if (delivery === 'verification-requested' || delivery === 'verification-pending') {
+            return response.status(202).json({
+                code: 'SES_VERIFICATION_REQUIRED',
+                requested: delivery === 'verification-requested',
+            });
+        }
+        if (delivery === 'verification-completed') {
+            return response.status(409).json({ message: 'AWS ya confirmó tu correo. Volvé a pedir el resumen en unos segundos.' });
+        }
         return response.status(200).json({ ok: true });
     } catch (error) {
         const code = errorIdentifier(error);
@@ -68,6 +83,9 @@ export default async function sendSummary(request: VercelRequest, response: Verc
         console.error('Error en el envío del resumen', code);
         if (code === 'MessageRejected') {
             return response.status(502).json({ message: 'AWS SES rechazó el envío. Revisá las identidades verificadas de esa región.' });
+        }
+        if (code === 'AccessDenied' || code === 'AccessDeniedException') {
+            return response.status(502).json({ message: 'AWS SES denegó el permiso de correo. Revisá la política IAM del servidor.' });
         }
         return response.status(500).json({ message: 'No pudimos enviar el resumen. Volvé a intentar en unos segundos.' });
     }

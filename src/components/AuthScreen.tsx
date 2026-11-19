@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { login, register } from '../services/auth';
+import { login, loginWithGoogle, register } from '../services/auth';
 import type { AuthMode } from '../utils/authValidation';
 import { AuthForm } from './AuthForm';
 import { Brand } from './Brand';
@@ -20,7 +20,12 @@ export function AuthScreen({ mode }: { mode: AuthMode }) {
                         <p>{isRegister ? 'Empezá a organizar tus tareas en Foco.' : 'Entrá a tu espacio de tareas.'}</p>
                     </header>
                     {error && <Notice>{error}</Notice>}
-                    <AuthForm mode={mode} onSubmit={isRegister ? register : login} disabled={Boolean(error)} />
+                    <AuthForm
+                        mode={mode}
+                        onSubmit={isRegister ? register : login}
+                        onGoogleSignIn={loginWithGoogle}
+                        disabled={Boolean(error)}
+                    />
                     <p className="auth-switch">
                         {isRegister ? '¿Ya tenés una cuenta?' : '¿Todavía no tenés cuenta?'}{' '}
                         <Link to={isRegister ? '/login' : '/registro'}>
