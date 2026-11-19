@@ -100,7 +100,7 @@ En el primer uso pueden aparecer **dos enlaces distintos**, uno de Firebase y ot
 | Comando | Resultado comprobado |
 | --- | --- |
 | `npm run typecheck` | TypeScript validado |
-| `npm test` | 40 pruebas aprobadas en 10 archivos |
+| `npm test` | 43 pruebas aprobadas en 11 archivos |
 | `npm run build` | Compilación de producción generada en `dist/` |
 
 La suite cubre validaciones, filtros, rutas privadas y respuestas de la API. Las pruebas del endpoint simulan Firebase Admin y SES e incluyen el flujo de verificación y el cuerpo HTML del correo. Con los emuladores se comprobó el CRUD, la actualización entre pestañas y el aislamiento de las tareas de dos cuentas. En Vercel, se comprobó que la demo abre y que `GET /api/send-summary` responde `405` con el mensaje que indica usar `POST`.
@@ -138,8 +138,6 @@ En IAM, agregá este objeto al arreglo `Statement` de la política del usuario q
 
 ## Uso de IA
 
-Usé Codex para contrastar la consigna con las lecciones del módulo, generar una primera implementación, escribir pruebas y revisar errores durante la puesta en marcha. El pedido inicial incluía «hace todo el trabajo basandote en el material del curso. sigue al pie de la letra la guia». Para diagnosticar Vercel, compartí las salidas de la terminal con errores como `EPERM` y `tar unpack failed`.
-
-El patrón que más sirvió fue dar un error concreto y comprobar el siguiente paso. Las pruebas con dos cuentas permitieron verificar las reglas de Firestore. La comprobación de la ruta publicada permitió confirmar que la función estaba disponible. Una decisión técnica fue obtener el destinatario del token verificado y consultar las tareas en el servidor para que cada cuenta solo pueda solicitar su propio resumen.
+Usé Codex para contrastar la consigna El patrón que más sirvió fue dar un error concreto y comprobar el siguiente paso. Las pruebas con dos cuentas permitieron verificar las reglas de Firestore. La comprobación de la ruta publicada permitió confirmar que la función estaba disponible. Una decisión técnica fue obtener el destinatario del token verificado y consultar las tareas en el servidor para que cada cuenta solo pueda solicitar su propio resumen.
 
 Fotografía de escritorio de Unsplash. [Imagen original](https://images.unsplash.com/photo-1499750310107-5fef28a66643)

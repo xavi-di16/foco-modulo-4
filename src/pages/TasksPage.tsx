@@ -7,6 +7,7 @@ import { Dialog } from '../components/Dialog';
 import { EmailSummary } from '../components/EmailSummary';
 import { Notice } from '../components/Notice';
 import { TaskSummary } from '../components/TaskSummary';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { TodoForm } from '../components/TodoForm';
 import { TodoList } from '../components/TodoList';
 import { WorkspaceNavigation } from '../components/WorkspaceNavigation';
@@ -94,6 +95,7 @@ function Workspace({ user }: { user: User }) {
                 <div className="mobile-brand"><Brand /></div>
                 <span className="topbar-date">{dayFormatter.format(new Date())}</span>
                 <div className="account">
+                    <ThemeToggle />
                     <span className="avatar" aria-hidden="true">{email.charAt(0).toUpperCase()}</span>
                     <span className="account-email" title={email}>{email}</span>
                     <button

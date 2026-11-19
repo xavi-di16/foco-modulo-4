@@ -7,6 +7,17 @@
     <meta name="theme-color" content="#f5f5ef" />
     <meta name="description" content="Organizá y gestioná tus tareas diarias con Foco." />
     <title>Foco | Gestor de tareas</title>
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('foco-theme');
+                var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+                var meta = document.querySelector('meta[name="theme-color"]');
+                if (meta) meta.setAttribute('content', theme === 'dark' ? '#11140d' : '#f5f6ef');
+            } catch (e) {}
+        })();
+    </script>
 </head>
 
 <body>

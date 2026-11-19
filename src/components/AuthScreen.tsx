@@ -6,6 +6,7 @@ import { AuthForm } from './AuthForm';
 import { Brand } from './Brand';
 import { ContactFooter } from './ContactFooter';
 import { Notice } from './Notice';
+import { ThemeToggle } from './ThemeToggle';
 
 export function AuthScreen({ mode }: { mode: AuthMode }) {
     const { error } = useAuth();
@@ -14,7 +15,10 @@ export function AuthScreen({ mode }: { mode: AuthMode }) {
     return (
         <div className="auth-shell">
             <main className="auth-main">
-                <Brand />
+                <header className="auth-header">
+                    <Brand />
+                    <ThemeToggle />
+                </header>
                 <div className="auth-content">
                     <header className="auth-intro">
                         <h1>{isRegister ? 'Creá tu cuenta' : 'Iniciá sesión'}</h1>
